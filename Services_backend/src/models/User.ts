@@ -1,0 +1,128 @@
+import {
+  CreationOptional,
+  DataTypes,
+  InferAttributes,
+  InferCreationAttributes,
+  Model,
+  NonAttribute,
+  Sequelize
+} from "sequelize";
+import type { Category } from "./Category";
+import type { Professional } from "./ProfessionalProfile";
+import type { UserProfile } from "./UserProfile";
+
+type UserAttributes = InferAttributes<User, { omit: "createdAt" | "updatedAt" | "categories" }>;
+type UserCreationAttributes = InferCreationAttributes<
+  User,
+  { omit: "id" | "createdAt" | "updatedAt" | "categories" }
+>;
+
+export class User extends Model<UserAttributes, UserCreationAttributes> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+  declare email: string;
+  declare cpf: string | null;
+  declare phone: string | null;
+  declare cep: string | null;
+  declare endereco: string | null;
+  declare numero: string | null;
+  declare complemento: string | null;
+  declare bairro: string | null;
+  declare cidade: string | null;
+  declare uf: string | null;
+  declare estado: string | null;
+  declare password: string | null;
+  declare role: CreationOptional<"user" | "professional" | "admin">;
+  declare categories?: NonAttribute<Category[]>;
+  declare professional?: NonAttribute<Professional>;
+  declare profile?: NonAttribute<UserProfile>;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+}
+
+export function initUserModel(sequelize: Sequelize) {
+  User.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+      },
+      name: {
+        type: DataTypes.STRING(120),
+        allowNull: false
+      },
+      email: {
+        type: DataTypes.STRING(180),
+        allowNull: false,
+        unique: true,
+        validate: { isEmail: true }
+      },
+      cpf: {
+        type: DataTypes.STRING(11),
+        allowNull: true,
+        unique: true,
+        validate: {
+          is: /^\d{11}$/
+        }
+      },
+      phone: {
+        type: DataTypes.STRING(32),
+        allowNull: true
+      },
+      cep: {
+        type: DataTypes.STRING(8),
+        allowNull: true,
+        validate: {
+          is: /^\d{8}$/
+        }
+      },
+      endereco: {
+        type: DataTypes.STRING(180),
+        allowNull: true
+      },
+      numero: {
+        type: DataTypes.STRING(20),
+        allowNull: true
+      },
+      complemento: {
+        type: DataTypes.STRING(120),
+        allowNull: true
+      },
+      bairro: {
+        type: DataTypes.STRING(120),
+        allowNull: true
+      },
+      cidade: {
+        type: DataTypes.STRING(120),
+        allowNull: true
+      },
+      uf: {
+        type: DataTypes.STRING(2),
+        allowNull: true
+      },
+      estado: {
+        type: DataTypes.STRING(120),
+        allowNull: true
+      },
+      password: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+      },
+      role: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: "user",
+        validate: {
+          isIn: [["user", "professional", "admin"]]
+        }
+      }
+    },
+    {
+      sequelize,
+      tableName: "users"
+    }
+  );
+
+  return User;
+}

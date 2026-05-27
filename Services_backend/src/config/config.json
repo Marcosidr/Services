@@ -1,0 +1,20 @@
+{
+  "development": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "host": "127.0.0.1",
+    "port": 5432
+  },
+  "test": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "host": "127.0.0.1",
+    "port": 5432
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "host": "127.0.0.1",
+    "port": 5432
+  }
+}

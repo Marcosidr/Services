@@ -1,0 +1,161 @@
+import {
+  CreationOptional,
+  DataTypes,
+  InferAttributes,
+  InferCreationAttributes,
+  Model,
+  Sequelize
+} from "sequelize";
+
+type ProfessionalAttributes = InferAttributes<Professional, {
+  omit: "createdAt" | "updatedAt";
+}>;
+
+type ProfessionalCreationAttributes = InferCreationAttributes<Professional, {
+  omit: "id" | "createdAt" | "updatedAt";
+}>;
+
+export class Professional extends Model<
+  ProfessionalAttributes,
+  ProfessionalCreationAttributes
+> {
+  declare id: CreationOptional<number>;
+  declare userId: number;
+  declare cpf: string;
+  declare description: string | null;
+  declare experience: string | null;
+  declare price: number | null;
+  declare priceUnit: CreationOptional<string>;
+  declare areaKm: CreationOptional<number>;
+  declare cep: string | null;
+  declare city: string | null;
+  declare latitude: number | null;
+  declare longitude: number | null;
+  declare online: CreationOptional<boolean>;
+  declare verified: CreationOptional<boolean>;
+  declare approvalStatus: CreationOptional<"pending" | "approved" | "rejected">;
+  declare photoUrl: string | null;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+}
+
+export function initProfessionalModel(sequelize: Sequelize) {
+  Professional.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+      },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true,
+        references: {
+          model: "users",
+          key: "id"
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE"
+      },
+      cpf: {
+        type: DataTypes.STRING(18),
+        allowNull: false,
+        unique: true
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      experience: {
+        type: DataTypes.STRING(20),
+        allowNull: true
+      },
+      price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+      },
+      priceUnit: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: "servico"
+      },
+      areaKm: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 10,
+        validate: {
+          min: 1,
+          max: 1000
+        }
+      },
+      cep: {
+        type: DataTypes.STRING(9),
+        allowNull: true
+      },
+      city: {
+        type: DataTypes.STRING(120),
+        allowNull: true
+      },
+      latitude: {
+        type: DataTypes.DOUBLE,
+        allowNull: true,
+        validate: {
+          min: -90,
+          max: 90
+        }
+      },
+      longitude: {
+        type: DataTypes.DOUBLE,
+        allowNull: true,
+        validate: {
+          min: -180,
+          max: 180
+        }
+      },
+      online: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
+      verified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
+      approvalStatus: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: "pending",
+        validate: {
+          isIn: [["pending", "approved", "rejected"]]
+        }
+      },
+      photoUrl: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      }
+    },
+    {
+      sequelize,
+      tableName: "professionals",
+      indexes: [
+        {
+          unique: true,
+          fields: ["cpf"]
+        },
+        {
+          fields: ["approvalStatus"]
+        },
+        {
+          fields: ["online"]
+        }
+      ]
+    }
+  );
+
+  return Professional;
+}
+
+export { Professional as ProfessionalProfile };
+export const initProfessionalProfileModel = initProfessionalModel;
