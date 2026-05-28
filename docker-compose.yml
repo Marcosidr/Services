@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: ./Services_backend
+
+    container_name: zentry_api
+
+    ports:
+      - '3000:3000'
+
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+
+      PGHOST: ep-rapid-waterfall-adjokn4k-pooler.c-2.us-east-1.aws.neon.tech
+      PGPORT: 5432
+      PGDATABASE: Zentry
+      PGUSER: neondb_owner
+      PGPASSWORD: npg_i5c3AYudxBEG
+      PGSSLMODE: require
+
+      JWT_SECRET: RMAxEkb54VM4wRVLnNnOUFUc7Ka9sxy5S5f6DaPKJIs
+      JWT_EXPIRES_IN: 1d
+
+      DATABASE_URL: postgresql://neondb_owner:npg_i5c3AYudxBEG@ep-rapid-waterfall-adjokn4k-pooler.c-2.us-east-1.aws.neon.tech/Zentry?sslmode=require
+
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+
+    container_name: pgadmin_web
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+
+    ports:
+      - '8080:80'
+
+    restart: always
