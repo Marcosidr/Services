@@ -116,7 +116,26 @@ npm run test:coverage
 3. `db:migrate*`: aplica/consulta migrations versionadas.
 4. `test*`: roda Jest com `.env.test` (testes em `backend/test`).
 
-## 8. Fluxo recomendado para novos devs
+## 8. Rodar backend em container
+
+Na raiz do repositorio:
+
+```bash
+docker compose up --build app
+```
+
+Para rodar a imagem manualmente, informe o arquivo de ambiente:
+
+```bash
+docker build -t zentry-api ./Services_backend
+docker run --rm --env-file ./Services_backend/.env -p 3000:3000 zentry-api
+```
+
+O container nao deve receber segredos por build nem copiar `.env` para a imagem.
+As variaveis sao injetadas em tempo de execucao pelo `env_file` do Compose ou por
+`docker run --env-file`.
+
+## 9. Fluxo recomendado para novos devs
 
 1. Clonar o projeto.
 2. Rodar `npm install`.
