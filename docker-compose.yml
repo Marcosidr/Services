@@ -1,7 +1,8 @@
 services:
-  app:
+  backend:
     build:
       context: ./Services_backend
+    image: zentry-backend:local
 
     container_name: zentry_api
 
@@ -9,24 +10,44 @@ services:
       - ./Services_backend/.env
 
     ports:
-      - '3000:3000'
+      - "${BACKEND_PORT:-3000}:3000"
 
     environment:
-      PORT: 3000
+      PORT: "3000"
       NODE_ENV: production
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - app-network
 
     restart: unless-stopped
 
   pgadmin:
+    profiles:
+      - tools
+
     image: dpage/pgadmin4:latest
 
     container_name: pgadmin_web
 
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+    env_file:
+      - ./Services_backend/.env
 
     ports:
-      - '8080:80'
+      - "${PGADMIN_PORT:-8080}:80"
+
+    networks:
+      - app-network
 
     restart: unless-stopped
+
+networks:
+  app-network:
+    name: zentry_app_network
+    driver: bridge
