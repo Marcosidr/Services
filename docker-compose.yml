@@ -1,4 +1,23 @@
 services:
+  nginx:
+    build:
+      context: ./Services_frontend
+    image: zentry-nginx:local
+
+    container_name: zentry_nginx
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    ports:
+      - "${NGINX_PORT:-80}:80"
+
+    networks:
+      - app-network
+
+    restart: unless-stopped
+
   backend:
     build:
       context: ./Services_backend

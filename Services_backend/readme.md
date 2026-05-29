@@ -121,6 +121,7 @@ npm run test:coverage
 Na raiz do repositorio:
 
 ```bash
+copy .env.example .env
 docker compose up --build backend
 ```
 
@@ -140,6 +141,19 @@ Para subir o PgAdmin junto com o backend, preencha `PGADMIN_DEFAULT_EMAIL` e
 
 ```bash
 docker compose --profile tools up --build
+```
+
+Para subir a aplicacao pelo Nginx, use:
+
+```bash
+docker compose up --build nginx
+```
+
+O Nginx serve o frontend em `http://localhost` e encaminha `/api` para o
+backend dentro da rede Docker. A validacao da API pelo proxy fica em:
+
+```txt
+GET http://localhost/api/health
 ```
 
 ## 9. Fluxo recomendado para novos devs
