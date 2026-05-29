@@ -116,16 +116,26 @@ npm run test:coverage
 3. `db:migrate*`: aplica/consulta migrations versionadas.
 4. `test*`: roda Jest com `.env.test` (testes em `backend/test`).
 
-## 8. Rodar backend em container
+## 8. Rodar aplicacao em container
 
 Na raiz do repositorio:
 
 ```bash
 copy .env.example .env
-docker compose up --build backend
+docker compose up --build nginx
 ```
 
-Para rodar a imagem manualmente, informe o arquivo de ambiente:
+No Compose, apenas o Nginx fica exposto para o host. O backend fica restrito a
+rede Docker e e acessado pelo Nginx em `/api`.
+
+Validacao pelo proxy:
+
+```txt
+GET http://localhost/api/health
+```
+
+Para rodar a imagem do backend manualmente fora do Compose, informe o arquivo de
+ambiente e publique a porta explicitamente:
 
 ```bash
 docker build -t zentry-api ./Services_backend
@@ -136,6 +146,15 @@ O container nao deve receber segredos por build nem copiar `.env` para a imagem.
 As variaveis sao injetadas em tempo de execucao pelo `env_file` do Compose ou por
 `docker run --env-file`.
 
+Para subir apenas o backend dentro da rede Docker, use:
+
+```bash
+docker compose up --build backend
+```
+
+Nesse modo o backend nao fica disponivel em `localhost:3000`; ele fica
+disponivel apenas para outros servicos do Compose pelo endereco `backend:3000`.
+
 Para subir o PgAdmin junto com o backend, preencha `PGADMIN_DEFAULT_EMAIL` e
 `PGADMIN_DEFAULT_PASSWORD` no `.env` e use o profile de ferramentas:
 
@@ -143,18 +162,8 @@ Para subir o PgAdmin junto com o backend, preencha `PGADMIN_DEFAULT_EMAIL` e
 docker compose --profile tools up --build
 ```
 
-Para subir a aplicacao pelo Nginx, use:
-
-```bash
-docker compose up --build nginx
-```
-
 O Nginx serve o frontend em `http://localhost` e encaminha `/api` para o
-backend dentro da rede Docker. A validacao da API pelo proxy fica em:
-
-```txt
-GET http://localhost/api/health
-```
+backend dentro da rede Docker.
 
 ## 9. Fluxo recomendado para novos devs
 
