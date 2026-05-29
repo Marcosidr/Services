@@ -165,6 +165,16 @@ docker compose --profile tools up --build
 O Nginx serve o frontend em `http://localhost` e encaminha `/api` para o
 backend dentro da rede Docker.
 
+### Headers de seguranca no Nginx
+
+O Nginx adiciona headers HTTP basicos para reduzir riscos comuns:
+
+1. `X-Frame-Options`: reduz risco de clickjacking.
+2. `X-Content-Type-Options`: evita MIME sniffing.
+3. `Referrer-Policy`: limita envio de origem em navegacao externa.
+4. `Permissions-Policy`: bloqueia camera, microfone e geolocalizacao por padrao.
+5. `Content-Security-Policy`: restringe scripts, estilos, fontes, imagens e conexoes permitidas.
+
 ## 9. Fluxo recomendado para novos devs
 
 1. Clonar o projeto.
