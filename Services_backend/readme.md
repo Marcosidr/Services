@@ -121,7 +121,7 @@ npm run test:coverage
 Na raiz do repositorio:
 
 ```bash
-docker compose up --build app
+docker compose up --build backend
 ```
 
 Para rodar a imagem manualmente, informe o arquivo de ambiente:
@@ -134,6 +134,13 @@ docker run --rm --env-file ./Services_backend/.env -p 3000:3000 zentry-api
 O container nao deve receber segredos por build nem copiar `.env` para a imagem.
 As variaveis sao injetadas em tempo de execucao pelo `env_file` do Compose ou por
 `docker run --env-file`.
+
+Para subir o PgAdmin junto com o backend, preencha `PGADMIN_DEFAULT_EMAIL` e
+`PGADMIN_DEFAULT_PASSWORD` no `.env` e use o profile de ferramentas:
+
+```bash
+docker compose --profile tools up --build
+```
 
 ## 9. Fluxo recomendado para novos devs
 
