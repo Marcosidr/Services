@@ -28,8 +28,8 @@ services:
     env_file:
       - ./Services_backend/.env
 
-    ports:
-      - "${BACKEND_PORT:-3000}:3000"
+    expose:
+      - "3000"
 
     environment:
       PORT: "3000"
