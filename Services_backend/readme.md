@@ -131,8 +131,32 @@ rede Docker e e acessado pelo Nginx em `/api`.
 Validacao pelo proxy:
 
 ```txt
-GET http://localhost/api/health
+GET https://zentry.local/api/health
 ```
+
+### HTTPS local com mkcert
+
+Instale a CA local e gere os certificados:
+
+```bash
+mkcert -install
+mkcert -cert-file certs/zentry.local.pem -key-file certs/zentry.local-key.pem zentry.local localhost 127.0.0.1 ::1
+```
+
+Configure o host local apontando para `127.0.0.1`:
+
+```txt
+127.0.0.1 zentry.local
+```
+
+No Windows, esse mapeamento fica em:
+
+```txt
+C:\Windows\System32\drivers\etc\hosts
+```
+
+Com o Nginx ativo, `http://zentry.local` redireciona automaticamente para
+`https://zentry.local`.
 
 Para rodar a imagem do backend manualmente fora do Compose, informe o arquivo de
 ambiente e publique a porta explicitamente:
