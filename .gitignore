@@ -30,6 +30,12 @@ coverage/
 !.env.example
 
 # =========================
+# LOCAL HTTPS CERTIFICATES
+# =========================
+certs/*
+!certs/.gitkeep
+
+# =========================
 # VITE / LOCAL
 # =========================
 *.local
