@@ -395,6 +395,12 @@ function UserDashboard() {
     }
   };
 
+  const closeConversation = () => {
+    setActiveChatProfessional(null);
+    setMessages([]);
+    setChatMessage("");
+  };
+
   const sendMessage = async () => {
     if (!chatMessage.trim()) return;
     const activeChat = activeChatProfessional;
@@ -1064,6 +1070,7 @@ if (loadError) {
             loadingConversations={loadingConversations}
             filteredConversations={filteredConversations}
             activeChatProfessional={activeChatProfessional}
+            onCloseConversation={closeConversation}
             deletingConversationId={deletingConversationId}
             onOpenConversation={openConversation}
             onDeleteConversation={deleteConversation}
