@@ -11,37 +11,43 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminPainel from "./pages/AdminPainel";
 import Contato from "./pages/contato";
 import RequireAdmin from "./componentes/RequireAdmin";
+import ScrollToTopLayout from "./componentes/ScrollToTopLayout";
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Root />,
+    element: <ScrollToTopLayout />,
     children: [
-      { index: true, element: <Home /> },
-      { path: "profissionais", element: <SearchPage /> },
-      { path: "contato", element: <Contato /> },
-      { path: "profissional/:id", element: <ProfessionalProfile /> },
-      { path: "painel", element: <UserDashboard /> },
       {
-        path: "admin",
-        element: (
-          <RequireAdmin>
-            <AdminPainel />
-          </RequireAdmin>
-        ),
+        path: "/",
+        element: <Root />,
+        children: [
+          { index: true, element: <Home /> },
+          { path: "profissionais", element: <SearchPage /> },
+          { path: "contato", element: <Contato /> },
+          { path: "profissional/:id", element: <ProfessionalProfile /> },
+          { path: "painel", element: <UserDashboard /> },
+          {
+            path: "admin",
+            element: (
+              <RequireAdmin>
+                <AdminPainel />
+              </RequireAdmin>
+            ),
+          },
+        ],
+      },
+      {
+        path: "/login",
+        element: <Login allowTabSwitch={false} initialTab="login" />,
+      },
+      {
+        path: "/cadastro",
+        element: <RegisterUser />,
+      },
+      {
+        path: "/cadastrar-profissional",
+        element: <RegisterProfessional />,
       },
     ],
-  },
-  {
-    path: "/login",
-    element: <Login allowTabSwitch={false} initialTab="login" />,
-  },
-  {
-    path: "/cadastro",
-    element: <RegisterUser />,
-  },
-  {
-    path: "/cadastrar-profissional",
-    element: <RegisterProfessional />,
   },
 ]);
