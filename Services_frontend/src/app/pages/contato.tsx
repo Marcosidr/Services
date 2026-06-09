@@ -7,7 +7,13 @@ import {
   Shield,
   Clock,
   ChevronRight,
+  CheckCircle2,
+  Loader2,
+  MailCheck,
+  X,
 } from "lucide-react";
+
+type FeedbackModalState = "loading" | "success" | null;
 
 export function Contato() {
   const navigate = useNavigate();
@@ -20,9 +26,9 @@ export function Contato() {
     website: "",
   });
 
-  const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -39,8 +45,8 @@ export function Contato() {
     e.preventDefault();
 
     setErro("");
-    setEnviado(false);
     setEnviando(true);
+    setFeedbackModal("loading");
 
     try {
       const response = await fetch("/api/contact", {
@@ -57,7 +63,7 @@ export function Contato() {
         throw new Error(payload?.message || "Nao foi possivel enviar sua mensagem.");
       }
 
-      setEnviado(true);
+      setFeedbackModal("success");
 
       setForm({
         nome: "",
@@ -69,6 +75,7 @@ export function Contato() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nao foi possivel enviar sua mensagem.";
       setErro(message);
+      setFeedbackModal(null);
     } finally {
       setEnviando(false);
     }
@@ -239,12 +246,6 @@ export function Contato() {
                   </p>
                 </div>
 
-                {enviado && (
-                  <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    Sua mensagem foi enviada com sucesso.
-                  </div>
-                )}
-
                 {erro && (
                   <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                     {erro}
@@ -351,6 +352,63 @@ export function Contato() {
           </div>
         </div>
       </section>
+
+      {feedbackModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="contact-feedback-title"
+        >
+          <div className="relative w-full max-w-sm rounded-3xl border border-white/70 bg-white p-6 text-center shadow-2xl">
+            {feedbackModal === "loading" ? (
+              <>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+                <h2 id="contact-feedback-title" className="mt-5 text-xl font-bold text-slate-900">
+                  Enviando email...
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Estamos encaminhando sua mensagem para a equipe Zentry.
+                </p>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackModal(null)}
+                  className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Fechar confirmacao"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <MailCheck className="h-8 w-8" />
+                </div>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Verificado
+                </div>
+                <h2 id="contact-feedback-title" className="mt-4 text-xl font-bold text-slate-900">
+                  Email enviado com sucesso
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Sua mensagem chegou para a equipe Zentry. Em breve entraremos em contato.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackModal(null)}
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary/90"
+                >
+                  Fechar
+                  <CheckCircle2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
