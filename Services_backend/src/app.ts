@@ -8,6 +8,7 @@ import professionalsRouter from "./routes/professionals.routes";
 import adminRouter from "./routes/admin.routes";
 import messagesRouter from "./routes/messages.routes";
 import notificationsRouter from "./routes/notifications.routes";
+import contactRouter from "./routes/contact.routes";
 import {
   errorEnvelopeMiddleware,
   errorHandler,
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/admin", adminRouter);
   app.use("/api/messages", messagesRouter);
   app.use("/api/notifications", notificationsRouter);
+  app.use("/api/contact", contactRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 

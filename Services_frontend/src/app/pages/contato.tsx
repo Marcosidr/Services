@@ -17,9 +17,12 @@ export function Contato() {
     email: "",
     assunto: "",
     mensagem: "",
+    website: "",
   });
 
   const [enviado, setEnviado] = useState(false);
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -32,20 +35,43 @@ export function Contato() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // aqui depois você pode trocar por API real
-    console.log("Dados enviados:", form);
+    setErro("");
+    setEnviado(false);
+    setEnviando(true);
 
-    setEnviado(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
 
-    setForm({
-      nome: "",
-      email: "",
-      assunto: "",
-      mensagem: "",
-    });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Nao foi possivel enviar sua mensagem.");
+      }
+
+      setEnviado(true);
+
+      setForm({
+        nome: "",
+        email: "",
+        assunto: "",
+        mensagem: "",
+        website: "",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nao foi possivel enviar sua mensagem.";
+      setErro(message);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -219,7 +245,26 @@ export function Contato() {
                   </div>
                 )}
 
+                {erro && (
+                  <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {erro}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="hidden" aria-hidden="true">
+                    <label htmlFor="website">Website</label>
+                    <input
+                      id="website"
+                      type="text"
+                      name="website"
+                      value={form.website}
+                      onChange={handleChange}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
                   <div className="grid sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -285,9 +330,10 @@ export function Contato() {
                   <div className="flex flex-col sm:flex-row gap-3 pt-2">
                     <button
                       type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-white font-medium shadow-md hover:bg-primary/90 transition-colors"
+                      disabled={enviando}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-white font-medium shadow-md hover:bg-primary/90 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      Enviar mensagem
+                      {enviando ? "Enviando..." : "Enviar mensagem"}
                       <ChevronRight className="w-4 h-4" />
                     </button>
 
