@@ -5,6 +5,12 @@ import { isValidCpf, normalizeCpf } from "../utils/cpf";
 import { normalizeEmail } from "../utils/email";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { generateToken } from "../utils/token";
+import { sendPasswordResetCodeMail } from "../services/mailService";
+import {
+  consumePasswordResetVerification,
+  createPasswordResetCode,
+  verifyPasswordResetCode
+} from "../services/passwordResetService";
 
 type CpfLookupParams = {
   cpf?: string;
@@ -13,6 +19,23 @@ type CpfLookupParams = {
 type UpdatePhotoBody = {
   photoUrl?: string;
 };
+
+type PasswordResetRequestBody = {
+  email?: string;
+};
+
+type PasswordResetVerifyBody = {
+  email?: string;
+  code?: string;
+};
+
+type PasswordResetConfirmBody = {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+const PASSWORD_RESET_REQUEST_MESSAGE = "Se o email estiver cadastrado, enviaremos um codigo de recuperacao.";
 
 /**
  * Helpers - Formatação de resposta
@@ -241,6 +264,87 @@ export class AuthController {
       }),
       user: publicUser(user)
     });
+  }
+
+  static async requestPasswordReset(req: Request<unknown, unknown, PasswordResetRequestBody>, res: Response) {
+    const normalizedEmail = normalizeEmail(req.body.email || "");
+    const emailError = UserValidator.validateEmail(normalizedEmail);
+
+    if (emailError) {
+      return res.status(400).json({ message: emailError.message });
+    }
+
+    const user = await User.findOne({ where: { email: normalizedEmail } });
+
+    if (user) {
+      const code = await createPasswordResetCode(user.id, user.email);
+      await sendPasswordResetCodeMail({
+        name: user.name,
+        email: user.email,
+        code
+      });
+    }
+
+    return res.status(202).json({ message: PASSWORD_RESET_REQUEST_MESSAGE });
+  }
+
+  static async verifyPasswordReset(req: Request<unknown, unknown, PasswordResetVerifyBody>, res: Response) {
+    const normalizedEmail = normalizeEmail(req.body.email || "");
+    const code = typeof req.body.code === "string" ? req.body.code.trim() : "";
+    const emailError = UserValidator.validateEmail(normalizedEmail);
+
+    if (emailError) {
+      return res.status(400).json({ message: emailError.message });
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(400).json({ message: "Informe o codigo de 6 digitos" });
+    }
+
+    const isValidCode = await verifyPasswordResetCode(normalizedEmail, code);
+    if (!isValidCode) {
+      return res.status(400).json({ message: "Codigo invalido ou expirado" });
+    }
+
+    return res.json({ message: "Codigo validado com sucesso" });
+  }
+
+  static async confirmPasswordReset(req: Request<unknown, unknown, PasswordResetConfirmBody>, res: Response) {
+    const normalizedEmail = normalizeEmail(req.body.email || "");
+    const password = typeof req.body.password === "string" ? req.body.password.trim() : "";
+    const confirmPassword = typeof req.body.confirmPassword === "string" ? req.body.confirmPassword.trim() : "";
+    const emailError = UserValidator.validateEmail(normalizedEmail);
+
+    if (emailError) {
+      return res.status(400).json({ message: emailError.message });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Informe a nova senha" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "As senhas nao coincidem" });
+    }
+
+    const passwordError = UserValidator.validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError.message });
+    }
+
+    const canResetPassword = await consumePasswordResetVerification(normalizedEmail);
+    if (!canResetPassword) {
+      return res.status(400).json({ message: "Codigo nao validado ou expirado" });
+    }
+
+    const user = await User.findOne({ where: { email: normalizedEmail } });
+    if (!user) {
+      return res.status(400).json({ message: "Codigo nao validado ou expirado" });
+    }
+
+    await user.update({ password: hashPassword(password) });
+
+    return res.json({ message: "Senha atualizada com sucesso" });
   }
 
   /**

@@ -8,6 +8,8 @@ import { getEmailValidationError, normalizeEmail } from "../utils/email";
 import { getPasswordValidationError } from "../utils/password";
 import { formatPhone, getPhoneValidationError, normalizePhone } from "../utils/phone";
 import { fileToOptimizedDataUrl } from "../utils/image";
+import BackButton from "../componentes/BackButton";
+import PasswordResetModal, { type PasswordResetStep } from "../componentes/PasswordResetModal";
 
 type AuthTab = "login" | "register";
 
@@ -207,6 +209,14 @@ function Login({ initialTab = "login", allowTabSwitch = true }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [passwordResetStep, setPasswordResetStep] = useState<PasswordResetStep>("login");
+  const [passwordResetEmail, setPasswordResetEmail] = useState("");
+  const [passwordResetCode, setPasswordResetCode] = useState("");
+  const [passwordResetPassword, setPasswordResetPassword] = useState("");
+  const [passwordResetConfirmPassword, setPasswordResetConfirmPassword] = useState("");
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState("");
+  const [passwordResetMessage, setPasswordResetMessage] = useState("");
 
   const validationErrors = useMemo(() => validateAuthForm(form, tab), [form, tab]);
 
@@ -251,6 +261,204 @@ function Login({ initialTab = "login", allowTabSwitch = true }: LoginProps) {
     setSubmitAttempted(false);
     setTouched({});
     setCpfAlreadyRegistered(false);
+  };
+
+  const resetPasswordResetFeedback = () => {
+    setPasswordResetError("");
+    setPasswordResetMessage("");
+  };
+
+  const closePasswordResetFlow = () => {
+    setPasswordResetStep("login");
+    setPasswordResetEmail("");
+    setPasswordResetCode("");
+    setPasswordResetPassword("");
+    setPasswordResetConfirmPassword("");
+    setPasswordResetLoading(false);
+    resetPasswordResetFeedback();
+  };
+
+  const startPasswordResetFlow = () => {
+    resetMessages();
+    setPasswordResetEmail(form.email);
+    setPasswordResetCode("");
+    setPasswordResetPassword("");
+    setPasswordResetConfirmPassword("");
+    resetPasswordResetFeedback();
+    setPasswordResetStep("email");
+  };
+
+  const getResponseMessage = async (response: Response, fallback: string) => {
+    try {
+      const data = (await response.json()) as { message?: string };
+      return data?.message || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const requestPasswordResetCode = async () => {
+    const normalizedResetEmail = normalizeEmail(passwordResetEmail);
+    const emailValidationError = getEmailValidationError(normalizedResetEmail);
+
+    resetPasswordResetFeedback();
+
+    if (emailValidationError) {
+      setPasswordResetError(emailValidationError);
+      return;
+    }
+
+    try {
+      setPasswordResetLoading(true);
+
+      const response = await fetch("/api/auth/password/forgot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email: normalizedResetEmail })
+      });
+
+      const message = await getResponseMessage(
+        response,
+        "Se o email estiver cadastrado, enviaremos um codigo de recuperacao."
+      );
+
+      if (!response.ok) {
+        throw new Error(message);
+      }
+
+      setPasswordResetEmail(normalizedResetEmail);
+      setPasswordResetMessage(message);
+      setPasswordResetStep("code");
+    } catch (err) {
+      console.error(err);
+      setPasswordResetError(err instanceof Error ? err.message : "Nao foi possivel enviar o codigo.");
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  const verifyResetCode = async () => {
+    const normalizedResetEmail = normalizeEmail(passwordResetEmail);
+    const sanitizedCode = passwordResetCode.replace(/\D/g, "");
+
+    resetPasswordResetFeedback();
+
+    if (sanitizedCode.length !== 6) {
+      setPasswordResetError("Informe o codigo de 6 digitos.");
+      return;
+    }
+
+    try {
+      setPasswordResetLoading(true);
+
+      const response = await fetch("/api/auth/password/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: normalizedResetEmail,
+          code: sanitizedCode
+        })
+      });
+
+      const message = await getResponseMessage(response, "Codigo validado com sucesso.");
+
+      if (!response.ok) {
+        throw new Error(message);
+      }
+
+      setPasswordResetCode(sanitizedCode);
+      setPasswordResetPassword("");
+      setPasswordResetConfirmPassword("");
+      setPasswordResetMessage("Codigo confirmado. Agora crie sua nova senha.");
+      setPasswordResetStep("password");
+    } catch (err) {
+      console.error(err);
+      setPasswordResetError(err instanceof Error ? err.message : "Nao foi possivel validar o codigo.");
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  const submitNewPassword = async () => {
+    const normalizedResetEmail = normalizeEmail(passwordResetEmail);
+    const newPassword = passwordResetPassword.trim();
+    const confirmedPassword = passwordResetConfirmPassword.trim();
+
+    resetPasswordResetFeedback();
+
+    if (!newPassword) {
+      setPasswordResetError("Informe a nova senha.");
+      return;
+    }
+
+    const passwordValidationError = getPasswordValidationError(newPassword);
+    if (passwordValidationError) {
+      setPasswordResetError(passwordValidationError);
+      return;
+    }
+
+    if (newPassword !== confirmedPassword) {
+      setPasswordResetError("As senhas nao coincidem.");
+      return;
+    }
+
+    try {
+      setPasswordResetLoading(true);
+
+      const response = await fetch("/api/auth/password/reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: normalizedResetEmail,
+          password: newPassword,
+          confirmPassword: confirmedPassword
+        })
+      });
+
+      const message = await getResponseMessage(response, "Senha atualizada com sucesso.");
+
+      if (!response.ok) {
+        throw new Error(message);
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        email: normalizedResetEmail,
+        password: "",
+        confirmPassword: ""
+      }));
+      closePasswordResetFlow();
+      setSuccessMessage(`${message} Entre com sua nova senha.`);
+    } catch (err) {
+      console.error(err);
+      setPasswordResetError(err instanceof Error ? err.message : "Nao foi possivel alterar a senha.");
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  const handlePasswordResetSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (passwordResetStep === "email") {
+      void requestPasswordResetCode();
+      return;
+    }
+
+    if (passwordResetStep === "code") {
+      void verifyResetCode();
+      return;
+    }
+
+    if (passwordResetStep === "password") {
+      void submitNewPassword();
+    }
   };
 
   const lookupCpf = async (normalizedCpf: string) => {
@@ -460,8 +668,47 @@ function Login({ initialTab = "login", allowTabSwitch = true }: LoginProps) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-primary/12 via-white to-secondary/18 p-4">
+      <BackButton className="absolute left-4 top-4 z-10 sm:left-6 sm:top-6" />
       <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+
+      {passwordResetStep !== "login" && (
+        <PasswordResetModal
+          step={passwordResetStep}
+          email={passwordResetEmail}
+          code={passwordResetCode}
+          password={passwordResetPassword}
+          confirmPassword={passwordResetConfirmPassword}
+          loading={passwordResetLoading}
+          error={passwordResetError}
+          message={passwordResetMessage}
+          showPassword={showPass}
+          showConfirmPassword={showConfirmPass}
+          onBack={() => {
+            if (passwordResetStep === "email") {
+              closePasswordResetFlow();
+              return;
+            }
+
+            resetPasswordResetFeedback();
+            setPasswordResetStep(passwordResetStep === "password" ? "code" : "email");
+          }}
+          onClose={closePasswordResetFlow}
+          onSubmit={handlePasswordResetSubmit}
+          onEmailChange={setPasswordResetEmail}
+          onCodeChange={setPasswordResetCode}
+          onPasswordChange={setPasswordResetPassword}
+          onConfirmPasswordChange={setPasswordResetConfirmPassword}
+          onTogglePassword={() => setShowPass(!showPass)}
+          onToggleConfirmPassword={() => setShowConfirmPass(!showConfirmPass)}
+          onChangeEmail={() => {
+            resetPasswordResetFeedback();
+            setPasswordResetStep("email");
+          }}
+          onResendCode={() => void requestPasswordResetCode()}
+        />
+      )}
+
       <div className="w-full max-w-lg">
         <div className="mb-8 text-center animate-fade-up">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-[0_14px_30px_-18px_rgba(29,78,216,0.95)]">
@@ -865,7 +1112,11 @@ function Login({ initialTab = "login", allowTabSwitch = true }: LoginProps) {
 
             {tab === "login" && (
               <div className="text-right">
-                <button type="button" className="text-xs text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={startPasswordResetFlow}
+                  className="text-xs text-primary hover:underline"
+                >
                   Esqueci minha senha
                 </button>
               </div>

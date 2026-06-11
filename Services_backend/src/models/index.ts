@@ -9,6 +9,7 @@ import { initMessageModel, Message } from "./Message";
 import { initUserProfileModel, UserProfile } from "./UserProfile";
 import { initProfessionalReviewModel, ProfessionalReview } from "./ProfessionalReview";
 import { initServiceOrderModel, ServiceOrderRecord } from "./ServiceOrder";
+import { initPasswordResetCodeModel, PasswordResetCode } from "./PasswordResetCode";
 
 export function initModels(sequelize: Sequelize) {
   initUserModel(sequelize);
@@ -21,6 +22,7 @@ export function initModels(sequelize: Sequelize) {
   initUserProfileModel(sequelize);
   initProfessionalReviewModel(sequelize);
   initServiceOrderModel(sequelize);
+  initPasswordResetCodeModel(sequelize);
 
   User.belongsToMany(Category, {
     through: UserCategory,
@@ -155,6 +157,16 @@ export function initModels(sequelize: Sequelize) {
     foreignKey: "professionalUserId",
     as: "professionalUser"
   });
+
+  User.hasMany(PasswordResetCode, {
+    foreignKey: "userId",
+    as: "passwordResetCodes"
+  });
+
+  PasswordResetCode.belongsTo(User, {
+    foreignKey: "userId",
+    as: "user"
+  });
 }
 
 export { User };
@@ -167,3 +179,4 @@ export { Message };
 export { UserProfile };
 export { ProfessionalReview };
 export { ServiceOrderRecord };
+export { PasswordResetCode };

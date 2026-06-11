@@ -8,6 +8,9 @@ router.get("/cpf/:cpf", AuthController.lookupByCpf);
 router.get("/me", auth, AuthController.me);
 router.patch("/me/photo", auth, AuthController.updateMyPhoto);
 router.patch("/me/profile", auth, AuthController.updateMyProfile);
+router.post("/password/forgot", AuthController.requestPasswordReset);
+router.post("/password/verify-code", AuthController.verifyPasswordReset);
+router.post("/password/reset", AuthController.confirmPasswordReset);
 router.post("/register", AuthController.register);
 router.post("/login", AuthController.login);
 
