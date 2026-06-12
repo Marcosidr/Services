@@ -1,0 +1,39 @@
+{
+  "name": "services",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No top-level tests configured\" && exit 0",
+    "prepare": "husky install",
+    "commitlint": "commitlint -E HUSKY_GIT_PARAMS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marcosidr/Services.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Marcosidr/Services/issues"
+  },
+  "homepage": "https://github.com/Marcosidr/Services#readme",
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "@commitlint/cli": "^17.6.0",
+    "@commitlint/config-conventional": "^17.6.0",
+    "lint-staged": "^13.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{json,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

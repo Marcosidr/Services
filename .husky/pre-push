@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- \"$0\")/_/husky.sh"
+
+# Run frontend E2E tests before push (uses frontend package)
+echo "Running Playwright E2E (Services_frontend)..."
+npm --prefix Services_frontend run e2e
