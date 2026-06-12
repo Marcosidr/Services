@@ -1,4 +1,25 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: zentry_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: zentry_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   nginx:
     build:
       context: ./Services_frontend
@@ -29,15 +50,20 @@ services:
 
     container_name: zentry_api
 
+    depends_on:
+      postgres:
+        condition: service_healthy
+
     env_file:
       - ./Services_backend/.env
 
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
 
     environment:
       PORT: "3000"
       NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/zentry_db
 
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health > /dev/null || exit 1"]
@@ -69,6 +95,9 @@ services:
       - app-network
 
     restart: unless-stopped
+
+volumes:
+  postgres_data:
 
 networks:
   app-network:
