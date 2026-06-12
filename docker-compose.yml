@@ -7,7 +7,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
       POSTGRES_DB: ${POSTGRES_DB:-zentry_db}
     ports:
-      - "5432:5432"
+      # Port mapping removed to avoid exposing Postgres externally
+    expose:
+      - "5432"
     volumes:
       - ./database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - postgres_data:/var/lib/postgresql/data
@@ -57,8 +59,9 @@ services:
     env_file:
       - ./Services_backend/.env
 
-    ports:
-      - "3000:3000"
+    # Do not publish backend port to host; keep internal exposure for nginx proxy
+    expose:
+      - "3000"
 
     environment:
       PORT: "3000"
