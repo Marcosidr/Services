@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged (if installed) and tests. Allow tests to fail locally.
+npx --no-install lint-staged || true
+npm test || true
